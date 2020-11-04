@@ -1,0 +1,63 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree_tags %}
+
+{% block title %}
+    Calculate your payoff
+{% endblock %}
+
+{% block content %}
+
+
+<div class="card bg-light">
+    <div class="card-body">
+
+    <p>
+
+
+            <table class="table table-bordered"  style="width:50%">
+
+       <tr>
+           <td> A. Endowment </td>
+           <td align="right"> {{ player.endowment }} units </td>
+       </tr>
+       <tr>
+            <td> B. Units bought  </td>
+            <td align="right"> </td>
+
+        <tr>
+            <td> C. Net units (A - B) </td>
+            <td align="right">  </td></tr>
+        <tr>
+
+        <tr>
+            <td> D. Final price </td>
+            <td align="right"> {{ price }} </td></tr>
+                <tr>
+            <td> E. Change in cash (C * D) </td>
+            <td align="right">  </td></tr>
+                <tr>
+            <td> F. Profit from land (use B) </td>
+            <td align="right">  </td></tr>
+        <tr>
+
+        <tr>
+            <td><strong> Total profits (E + F)</strong></td>
+            <td align="right"><strong> </strong></td>
+       </tr>
+    </table>
+
+
+
+    </p>
+
+    </div>
+</div>
+
+
+    <br>
+
+
+{% next_button %}
+
+
+{% endblock %}

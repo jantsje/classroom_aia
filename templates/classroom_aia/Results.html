@@ -1,0 +1,16 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree_tags %}
+
+{% block title %}
+    Results  (Period {{ subsession.round_number }} of {{ Constants.num_rounds }})
+{% endblock %}
+
+{% block content %}
+
+    So far, {{ num_accepted_bids }} bids have been accepted.
+    The price of these units is {{ price }}.
+    <br>
+
+
+    {% next_button %}
+{% endblock %}

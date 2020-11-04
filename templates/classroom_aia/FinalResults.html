@@ -1,0 +1,27 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree_tags %}
+
+{% block title %}
+    Final results page
+{% endblock %}
+
+{% block content %}
+
+
+ <div class="alert alert-secondary" role="alert">
+    <h5>Here is a list of the bids, with the accepted bids in green.</h5>
+
+     <h4>{% for item in accepted_bids %} <span class="badge badge-success">{{item}}</span> {% endfor %}
+     {% for item in other_bids %} <span class="badge badge-secondary">{{item}}</span> {% endfor %}</h4>
+
+ <h5>The final price for these items is {{ price }}.</h5>
+
+    </div>
+
+
+
+<button class="btn btn-primary btn-right btn-lg" onclick="self.close()">Close this window</button>
+
+
+
+{% endblock %}
