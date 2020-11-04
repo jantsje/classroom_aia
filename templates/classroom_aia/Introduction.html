@@ -2,17 +2,14 @@
 {% load otree %}
 
 {% block title %}
-    Instructions
+    Getting started
 {% endblock %}
 
 {% block content %}
 
+
     {% include Constants.instructions_template %}
 
-    Your type is {{ player.type }}.
-    You are currently endowed with  {{ player.endowment }} units of water.
-    <br><br>
 
-    {% next_button %}
 
 {% endblock %}

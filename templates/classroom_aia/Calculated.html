@@ -2,7 +2,7 @@
 {% load staticfiles otree_tags %}
 
 {% block title %}
-    Calculate your payoff
+    Your payoff, calculated
 {% endblock %}
 
 {% block content %}
@@ -22,31 +22,31 @@
 
        <tr>
            <td> A. Endowment </td>
-           <td align="right">  </td>
+           <td align="right"> {{ endowment }} units </td>
        </tr>
        <tr>
             <td> B. Units bought  </td>
-            <td align="right">  </td>
+            <td align="right"> {{ player_accepted_bids }} units </td>
 
         <tr>
             <td> C. Net units sold (A - B) </td>
-            <td align="right">  </td></tr>
+            <td align="right"> {{ net_units }} units </td></tr>
         <tr>
 
         <tr>
             <td> D. Final price </td>
-            <td align="right">  </td></tr>
+            <td align="right"> {{ price }} </td></tr>
                 <tr>
             <td> E. Change in cash (C * D) </td>
-            <td align="right">  </td></tr>
+            <td align="right">{{ cash_change }}  </td></tr>
                 <tr>
             <td> F. Profit from land (use B) </td>
-            <td align="right">  </td></tr>
+            <td align="right"> {{ profit_land }} ECU </td></tr>
         <tr>
 
         <tr>
             <td><strong> Total profits (E + F)</strong></td>
-            <td align="right"><strong> </strong></td>
+            <td align="right"><strong> {{ profit }}</strong></td>
        </tr>
     </table>
 

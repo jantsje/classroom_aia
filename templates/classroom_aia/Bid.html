@@ -8,18 +8,29 @@
 
 {% block content %}
 
+        {% include Constants.instructions_template %}
+
+{% if round_number != 1 %}
+    <div class="card bg-light instructions">
+    <div class="card-body">
+        You currently have <strong>{{ player_accepted_bids }} bid{% if player_accepted_bids != 1%}s{% endif %} </strong> accepted.
+    </div></div>
+{% endif %}
+
+<div class="alert alert-info" role="alert">
 {% if not stopped %}
 
-    You can place your
+    <h5>You can place your
 {%  if round_number != 1 %}
     additional
 {% endif %}
-bid here.
+        bid here.</h5>
 
-    {% if round_number != 1 %} Note that the current price is {{ price }}.
-        Your bid should be higher than the current price. {% endif %}
-
+    {% if round_number != 1 %} Note that the current <strong>price is {{ price }} ECU</strong>.
+        Your additional bid must be higher than the current price.
     <br><br>
+    {% endif %}
+
 
     {% for field in form %}
     {% if field.name == "bid" %}
@@ -38,7 +49,7 @@ bid here.
 
 <button name="stop" value=True role="button" class="btn btn-primary btn-md"
                        onclick="document.getElementById('bid').required = false;"
->Stop bidding </button>
+>Skip bidding for this round </button>
 {{ form.stop.errors }}
      {% endif %}
     {% endif %}
@@ -55,6 +66,7 @@ bid here.
 
     {% endif %}
 
+    </div>
 
 
 {#    {{ block.super }}#}

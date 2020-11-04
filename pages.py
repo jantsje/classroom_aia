@@ -7,10 +7,12 @@ from otree.constants import timeout_happened
 
 class Introduction(Page):
     """Description of the game: How to play and returns expected"""
-    pass
 
     def is_displayed(self):
         return self.subsession.round_number == 1
+
+    def vars_for_template(self):
+        return self.player.vars_for_template()
 
 
 class Bid(Page):
@@ -18,7 +20,7 @@ class Bid(Page):
 
     form_model = 'player'
 
-    timeout_seconds = 20
+    # timeout_seconds = 15
 
     def before_next_page(self):
         if self.timeout_happened:
@@ -38,9 +40,10 @@ class Bid(Page):
                self.subsession.round_number <= Constants.num_rounds
 
     def vars_for_template(self):
-        return{'round_number': self.round_number,
-               'stopped': self.participant.vars["stopped"],
-               'price': self.session.vars["price"]}
+        return dict(self.player.vars_for_template(),
+                    round_number=self.round_number,
+                    stopped=self.participant.vars["stopped"],
+                    price=self.session.vars["price"])
 
 
 class AfterBidWP(WaitPage):
@@ -56,8 +59,6 @@ class AfterBidWP(WaitPage):
 class Results(Page):
     """Players payoff: How much each has earned"""
 
-    timeout_seconds = 5
-
     def is_displayed(self):
         return self.session.vars["num_stopped_players"] < Constants.players_per_group and \
                self.subsession.round_number <= Constants.num_rounds
@@ -66,7 +67,8 @@ class Results(Page):
         return {"accepted_bids": self.session.vars["accepted_bids"],
                 "num_accepted_bids": len(self.session.vars["accepted_bids"]),
                 "price": self.session.vars["price"],
-                "num_stopped_players": self.session.vars["num_stopped_players"]}
+                "num_stopped_players": self.session.vars["num_stopped_players"],
+                "player_accepted_bids": self.player.accepted_bids}
 
 
 class Calculate(Page):
@@ -76,7 +78,27 @@ class Calculate(Page):
         return self.subsession.round_number == Constants.num_rounds
 
     def vars_for_template(self):
-        return {"price": self.session.vars["price"]}  # add later: player.num_accepted_bids
+        return self.player.vars_for_template()
+
+
+class Calculated(Page):
+    """Students are asked to calculate payoff"""
+
+    def is_displayed(self):
+        return self.subsession.round_number == Constants.num_rounds
+
+    def vars_for_template(self):
+        net_units = self.player.participant.vars["endowment"] - self.player.participant.vars["accepted_bids"]
+        cash_change = self.session.vars["price"] * net_units
+        profit_irrigated = sum(self.participant.vars["land"][:self.player.participant.vars["accepted_bids"]])
+        profit_dry = len(self.player.participant.vars["land"]) - self.player.participant.vars["accepted_bids"]
+        profit_land = profit_irrigated + profit_dry
+        profit = profit_land + cash_change
+        return dict(self.player.vars_for_template(),
+                    net_units=net_units,
+                    cash_change=cash_change,
+                    profit_land=profit_land,
+                    profit=profit)
 
 
 class FinalResults(Page):
@@ -86,7 +108,7 @@ class FinalResults(Page):
         return self.subsession.round_number == Constants.num_rounds
 
     def vars_for_template(self):
-        return {"other_bids": self.session.vars["bids"][len(self.session.vars["accepted_bids"]):],
+        return {"other_bids": self.session.vars["other_bids"],
                 "accepted_bids": self.session.vars["accepted_bids"],
                 "all_bids": self.session.vars["bids"],
                 "num_accepted_bids": len(self.session.vars["accepted_bids"]),
@@ -100,5 +122,6 @@ page_sequence = [
     AfterBidWP,
     Results,
     Calculate,
+    Calculated,
     FinalResults
 ]

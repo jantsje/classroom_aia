@@ -2,7 +2,7 @@
 {% load staticfiles otree_tags %}
 
 {% block title %}
-    Final results page
+    Final bids page
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
      <h4>{% for item in accepted_bids %} <span class="badge badge-success">{{item}}</span> {% endfor %}
      {% for item in other_bids %} <span class="badge badge-secondary">{{item}}</span> {% endfor %}</h4>
 
- <h5>The final price for these items is {{ price }}.</h5>
+The final price for these items was <strong>{{ price }}</strong> (the first price in grey).
 
     </div>
 

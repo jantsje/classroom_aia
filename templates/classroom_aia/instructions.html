@@ -3,9 +3,22 @@
 <div class="card bg-light instructions">
     <div class="card-body">
 
-    <p>
-        General instructions can be added here.    </p>
+    You have <strong>{{ num_land }} plots </strong> of land.
+    Your endowment is <strong>{{ endowment }} unit{% if endowment != 1 %}s{% endif %} </strong> of water.
+    Remember, in an all-in-auction you can only irrigate if you buy units. <br>
 
+    <table style="width:60%">
+    <tr><td>
+        <h6>Payoff per plot of land if irrigated: </h6>
+    </td>
+    <td align="right">
+        <h2>{% for item in land %} <span class="badge badge-info">{{item}}</span> {% endfor %}</h2></td>
+    </tr>
+    <tr><td>
+        <h6> Payoff per plot of land without water:</h6></td>
+        <td align="right"><h2>{% for item in land %} <span class="badge badge-dark"> 1 </span> {% endfor %}</h2></td>
+    </tr>
+    </table>
     </div>
 </div>
 
