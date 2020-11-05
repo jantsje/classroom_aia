@@ -2,15 +2,15 @@
 {% load staticfiles otree_tags %}
 
 {% block title %}
-    Place your bids (Period {{ player.round_number }} of
-    {{ Constants.num_rounds }})
+    Place your bids (Period {{ round_in_session }} of
+    {{ Constants.num_rounds_per_session }})
 {% endblock %}
 
 {% block content %}
 
         {% include Constants.instructions_template %}
 
-{% if round_number != 1 %}
+{% if round_in_session != 1 %}
     <div class="card bg-light instructions">
     <div class="card-body">
         You currently have <strong>{{ player_accepted_bids }} bid{% if player_accepted_bids != 1%}s{% endif %} </strong> accepted.
@@ -18,15 +18,14 @@
 {% endif %}
 
 <div class="alert alert-info" role="alert">
-{% if not stopped %}
 
     <h5>You can place your
-{%  if round_number != 1 %}
+{%  if round_in_session != 1 %}
     additional
 {% endif %}
         bid here.</h5>
 
-    {% if round_number != 1 %} Note that the current <strong>price is {{ price }} ECU</strong>.
+    {% if round_in_session != 1 %} Note that the current <strong>price is {{ price }}</strong>.
         Your additional bid must be higher than the current price.
     <br><br>
     {% endif %}
@@ -41,10 +40,10 @@
     Submit bid </button>
      {{ form.bid.errors }}
 
-    <br><br>
+    <br>
     {% elif field.name == "stop" %}
 
-    {% if round_number != 1 %}
+    {% if round_in_session != 1 %}
         If you do not want to place an additional bid, click here:
 
 <button name="stop" value=True role="button" class="btn btn-primary btn-md"
@@ -54,17 +53,6 @@
      {% endif %}
     {% endif %}
     {% endfor %}
-
-    {% else %}
-
-        You cannot place any bids because you stopped bidding before. Click next to check the results.
-<br>
-
-<button name="stop" value=False role="button" class="btn btn-primary btn-md"
-                       onclick="document.getElementById('bid').required = false;"
->Next </button>
-
-    {% endif %}
 
     </div>
 

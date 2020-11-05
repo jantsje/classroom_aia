@@ -1,8 +1,5 @@
-from . import models
 from .models import Constants
 from ._builtin import Page, WaitPage
-from otree.api import Currency as c, currency_range
-from otree.constants import timeout_happened
 
 
 class Introduction(Page):
@@ -16,7 +13,7 @@ class Introduction(Page):
 
 
 class Bid(Page):
-    """Player: Choose how much to contribute"""
+    """Player: Choose how much to bid"""
 
     form_model = 'player'
 
@@ -36,22 +33,19 @@ class Bid(Page):
         return fields
 
     def is_displayed(self):
-        return self.session.vars["num_stopped_players"] < Constants.players_per_group and \
-               self.subsession.round_number <= Constants.num_rounds
+        return self.session.vars["players_stopped"] < Constants.players_per_group and \
+               self.subsession.round_number < Constants.num_rounds
 
     def vars_for_template(self):
-        return dict(self.player.vars_for_template(),
-                    round_number=self.round_number,
-                    stopped=self.participant.vars["stopped"],
-                    price=self.session.vars["price"])
+        return self.player.vars_for_template()
 
 
 class AfterBidWP(WaitPage):
     after_all_players_arrive = 'order_bids'
 
     def is_displayed(self):
-        return self.session.vars["num_stopped_players"] < Constants.players_per_group and \
-               self.subsession.round_number <= Constants.num_rounds
+        return self.session.vars["players_stopped"] < Constants.players_per_group and \
+               self.subsession.round_number < Constants.num_rounds
 
         # body_text = "Waiting for other participants to contribute."
 
@@ -60,32 +54,30 @@ class Results(Page):
     """Players payoff: How much each has earned"""
 
     def is_displayed(self):
-        return self.session.vars["num_stopped_players"] < Constants.players_per_group and \
-               self.subsession.round_number <= Constants.num_rounds
+        return self.session.vars["players_stopped"] < Constants.players_per_group and \
+               self.subsession.round_number < Constants.num_rounds
 
     def vars_for_template(self):
-        return {"accepted_bids": self.session.vars["accepted_bids"],
-                "num_accepted_bids": len(self.session.vars["accepted_bids"]),
-                "price": self.session.vars["price"],
-                "num_stopped_players": self.session.vars["num_stopped_players"],
-                "player_accepted_bids": self.player.accepted_bids}
+        return dict(self.player.vars_for_template(),
+                    accepted_bids=self.session.vars["accepted_bids"],
+                    num_accepted_bids=len(self.session.vars["accepted_bids"]))
 
 
 class Calculate(Page):
     """Students are asked to calculate payoff"""
 
     def is_displayed(self):
-        return self.subsession.round_number == Constants.num_rounds
+        return self.subsession.round_number % Constants.num_rounds_per_session == 0
 
     def vars_for_template(self):
         return self.player.vars_for_template()
 
 
 class Calculated(Page):
-    """Students are asked to calculate payoff"""
+    """Students shown their payoffs"""
 
     def is_displayed(self):
-        return self.subsession.round_number == Constants.num_rounds
+        return self.subsession.round_number % Constants.num_rounds_per_session == 0
 
     def vars_for_template(self):
         net_units = self.player.participant.vars["endowment"] - self.player.participant.vars["accepted_bids"]
@@ -105,7 +97,7 @@ class FinalResults(Page):
     """Final payoff"""
 
     def is_displayed(self):
-        return self.subsession.round_number == Constants.num_rounds
+        return self.subsession.round_number % Constants.num_rounds_per_session == 0
 
     def vars_for_template(self):
         return {"other_bids": self.session.vars["other_bids"],
@@ -113,7 +105,18 @@ class FinalResults(Page):
                 "all_bids": self.session.vars["bids"],
                 "num_accepted_bids": len(self.session.vars["accepted_bids"]),
                 "price": self.session.vars["price"],
-                "num_stopped_players": self.session.vars["num_stopped_players"]}
+                "num_stopped_players": self.session.vars["players_stopped"],
+                "session_num": int(self.subsession.round_number / Constants.num_rounds_per_session)}
+
+
+class NewSession(Page):
+    """Warning page that a new session will start"""
+
+    def is_displayed(self):
+        return self.subsession.round_number % Constants.num_rounds_per_session == 0
+
+    def before_next_page(self):
+        self.player.reset_session()
 
 
 page_sequence = [
@@ -123,5 +126,6 @@ page_sequence = [
     Results,
     Calculate,
     Calculated,
-    FinalResults
+    FinalResults,
+    NewSession
 ]

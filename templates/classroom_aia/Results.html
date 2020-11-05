@@ -2,15 +2,17 @@
 {% load staticfiles otree_tags %}
 
 {% block title %}
-    Results  (Period {{ subsession.round_number }} of {{ Constants.num_rounds }})
+    Results  (Period {{ round_in_session }} of {{ Constants.num_rounds_per_session }})
 {% endblock %}
 
 {% block content %}
 
+    <div class="card bg-light instructions">
+    <div class="card-body">
     So far, {{ num_accepted_bids }} bids have been accepted.
     You have <strong>{{ player_accepted_bids }} bid{% if player_accepted_bids != 1 %}s{% endif %} </strong> accepted.
     The auction price of these units is {{ price }}.
     <br>
-
+    </div></div>
 
 {% endblock %}
