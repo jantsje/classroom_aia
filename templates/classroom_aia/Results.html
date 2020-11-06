@@ -9,7 +9,8 @@
 
     <div class="card bg-light instructions">
     <div class="card-body">
-    So far, {{ num_accepted_bids }} bids have been accepted.
+    So far, {{ num_accepted_bids }} bids have been accepted. There are {{ total_endowments }} units in the auction.
+    <br><br>
     You have <strong>{{ player_accepted_bids }} bid{% if player_accepted_bids != 1 %}s{% endif %} </strong> accepted.
     The auction price of these units is {{ price }}.
     <br>

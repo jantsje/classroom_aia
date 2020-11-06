@@ -72,6 +72,9 @@ class Calculate(Page):
     def vars_for_template(self):
         return self.player.vars_for_template()
 
+    def before_next_page(self):
+        self.player.calculate_payoffs()
+
 
 class Calculated(Page):
     """Students shown their payoffs"""
@@ -106,17 +109,24 @@ class FinalResults(Page):
                 "num_accepted_bids": len(self.session.vars["accepted_bids"]),
                 "price": self.session.vars["price"],
                 "num_stopped_players": self.session.vars["players_stopped"],
-                "session_num": int(self.subsession.round_number / Constants.num_rounds_per_session)}
+                "session_num": int(self.subsession.round_number / Constants.num_rounds_per_session),
+                "payoff": self.player.participant.vars["payoff"]}
 
 
 class NewSession(Page):
     """Warning page that a new session will start"""
 
     def is_displayed(self):
-        return self.subsession.round_number % Constants.num_rounds_per_session == 0
+        if self.subsession.round_number == Constants.num_rounds:
+            return False  # to make sure this page is not displayed after the final session
+        else:
+            return self.subsession.round_number % Constants.num_rounds_per_session == 0
 
     def before_next_page(self):
-        self.player.reset_session()
+        self.group.reset_session()
+
+    def vars_for_template(self):
+        return dict(payoff=self.player.participant.vars["payoff"])
 
 
 page_sequence = [
