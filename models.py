@@ -13,35 +13,53 @@ Classroom all-in-auction from David Zetland: https://www.kysq.org/pubs/AiA_demo.
 
 class Constants(BaseConstants):
     name_in_url = 'classroom_aia'
-    players_per_group = 3
-    num_sessions = 4
-    num_rounds_per_session = 3
-    num_rounds = num_sessions * num_rounds_per_session
+    num_rounds = 100  # large number, real number comes from settings in config
     instructions_template = 'classroom_aia/instructions.html'
-    endowments = [0, 1, 2, 3, 4]
-    types = ['A', 'B', 'C']
-    land = [[6, 4, 3, 2, 1], [8, 5, 3, 2], [10, 9, 7]]
+    players_per_group = None  # got to enter something
 
 
 class Subsession(BaseSubsession):
+
     def vars_for_admin_report(self):
-        pass
+        if self.round_number % self.session.config["rounds_per_session"] == 0:
+            round_in_session = 3  # else it would return 0
+        else:
+            round_in_session = self.round_number % self.session.config["rounds_per_session"]
+        if round_in_session == self.session.config["rounds_per_session"]:
+            session_nr = int(self.round_number / self.session.config["rounds_per_session"])
+        else:
+            session_nr = int(self.round_number / self.session.config["rounds_per_session"]) + 1
+        official_round = self.round_number
+        vars_admin_list = [[p.id_in_group,
+                            p.participant.vars["payoff"],
+                            round_in_session,
+                            session_nr,
+                            official_round,
+                            p.participant.vars["land"],
+                            p.participant.vars["endowment"]]
+                           for p in self.get_players()]
+        return dict(vars_admin_list=vars_admin_list)
 
     def creating_session(self):
+        group_matrix = []
+        players = self.get_players()
+        ppg = self.session.config['players_per_group']
+        for i in range(0, len(players), ppg):
+            group_matrix.append(players[i:i + ppg])
+        self.set_group_matrix(group_matrix)
+
+        s = self.session.config
         if self.round_number == 1:
+            self.session.vars["num_rounds"] = s["num_sessions"] * s["rounds_per_session"]
             self.session.vars["players_stopped"] = 0
             self.session.vars["total_num_endowments"] = 0
+            endowments = self.session.config["endowments"]
+            land = self.session.config["land"]
             for p in self.get_players():
                 p.participant.vars["payoff"] = 0
-                p.participant.vars["type"] = random.choice(Constants.types)
-                p.participant.vars["endowment"] = random.choice(Constants.endowments)
+                p.participant.vars["endowment"] = random.choice(endowments)
                 p.participant.vars["accepted_bids"] = 0
-                if p.participant.vars["type"] == "A":
-                    p.participant.vars["land"] = Constants.land[0]
-                elif p.participant.vars["type"] == "B":
-                    p.participant.vars["land"] = Constants.land[1]
-                else:  # must be C
-                    p.participant.vars["land"] = Constants.land[2]
+                p.participant.vars["land"] = random.choice(land)
                 self.session.vars["total_num_endowments"] += p.participant.vars["endowment"]
 
             self.session.vars["bids"] = []
@@ -79,42 +97,39 @@ class Group(BaseGroup):
             p.participant.vars["accepted_bids"] = self.session.vars["accepted_bidders"].count(p.id_in_group)
         
     def reset_session(self):
-        print("now resetting session")
-        self.session.vars["players_stopped"] = 0
-        self.session.vars["bids"] = []
-        self.session.vars["accepted_bids"] = []
-        self.session.vars["other_bids"] = []
-        self.session.vars["accepted_bidders"] = []
-        self.session.vars["price"] = c(0)
-        self.session.vars["total_num_endowments"] = 0
-        
+        endowments = self.session.config["endowments"]
+        land = self.session.config["land"]
         for p in self.get_players():
-            p.participant.vars["type"] = random.choice(Constants.types)
-            p.participant.vars["endowment"] = random.choice(Constants.endowments)
+            if p == 1:  # to make sure only to reset once per group
+                print("now resetting session")
+                self.session.vars["players_stopped"] = 0
+                self.session.vars["bids"] = []
+                self.session.vars["accepted_bids"] = []
+                self.session.vars["other_bids"] = []
+                self.session.vars["accepted_bidders"] = []
+                self.session.vars["price"] = c(0)
+                self.session.vars["total_num_endowments"] = 0
+
+            else:
+                pass
+            p.participant.vars["endowment"] = random.choice(endowments)
             p.participant.vars["accepted_bids"] = 0
-            if p.participant.vars["type"] == "A":
-                p.participant.vars["land"] = Constants.land[0]
-            elif p.participant.vars["type"] == "B":
-                p.participant.vars["land"] = Constants.land[1]
-            else:  # must be C
-                p.participant.vars["land"] = Constants.land[2]
+            p.participant.vars["land"] = random.choice(land)
             self.session.vars["total_num_endowments"] += p.participant.vars["endowment"]
 
 
 class Player(BasePlayer):
     endowment = models.IntegerField()
     bid = models.CurrencyField(min=0, max=20, initial=0, blank=True)  # min will be set in Bid template to current price
-    type = models.StringField()
     stop = models.BooleanField()
     accepted_bids = models.IntegerField()
 
     def vars_for_template(self):
-        if self.subsession.round_number % Constants.num_rounds_per_session == 0:
+        if self.subsession.round_number % self.session.config["rounds_per_session"] == 0:
             round_in_session = 3  # else it would return 0
         else:
-            round_in_session = self.subsession.round_number % Constants.num_rounds_per_session
+            round_in_session = self.subsession.round_number % self.session.config["rounds_per_session"]
         return dict(endowment=self.participant.vars["endowment"],
-                    type=self.participant.vars["type"],
                     land=self.participant.vars["land"],
                     num_land=len(self.participant.vars["land"]),
                     player_accepted_bids=self.participant.vars["accepted_bids"],
@@ -122,7 +137,8 @@ class Player(BasePlayer):
                     num_stopped=self.session.vars["players_stopped"],
                     round_in_session=round_in_session,
                     total_endowments=self.session.vars["total_num_endowments"],
-                    payoff = self.participant.vars["payoff"])
+                    payoff=self.participant.vars["payoff"],
+                    rounds_per_session=self.session.config["rounds_per_session"])
 
     def calculate_payoffs(self):
         net_units = self.participant.vars["endowment"] - self.participant.vars["accepted_bids"]

@@ -17,7 +17,8 @@ class Bid(Page):
 
     form_model = 'player'
 
-    # timeout_seconds = 15
+    def get_timeout_seconds(self):
+        return self.session.config["timeout_seconds"]
 
     def before_next_page(self):
         if self.timeout_happened:
@@ -33,8 +34,8 @@ class Bid(Page):
         return fields
 
     def is_displayed(self):
-        return self.session.vars["players_stopped"] < Constants.players_per_group and \
-               self.subsession.round_number < Constants.num_rounds
+        return self.session.vars["players_stopped"] < self.session.config['players_per_group'] and \
+               self.subsession.round_number < self.session.vars["num_rounds"]
 
     def vars_for_template(self):
         return self.player.vars_for_template()
@@ -44,8 +45,8 @@ class AfterBidWP(WaitPage):
     after_all_players_arrive = 'order_bids'
 
     def is_displayed(self):
-        return self.session.vars["players_stopped"] < Constants.players_per_group and \
-               self.subsession.round_number < Constants.num_rounds
+        return self.session.vars["players_stopped"] < self.session.config['players_per_group'] and \
+               self.subsession.round_number < self.session.vars["num_rounds"]
 
         # body_text = "Waiting for other participants to contribute."
 
@@ -54,8 +55,8 @@ class Results(Page):
     """Players payoff: How much each has earned"""
 
     def is_displayed(self):
-        return self.session.vars["players_stopped"] < Constants.players_per_group and \
-               self.subsession.round_number < Constants.num_rounds
+        return self.session.vars["players_stopped"] < self.session.config['players_per_group'] and \
+               self.subsession.round_number < self.session.vars["num_rounds"]
 
     def vars_for_template(self):
         return dict(self.player.vars_for_template(),
@@ -67,7 +68,10 @@ class Calculate(Page):
     """Students are asked to calculate payoff"""
 
     def is_displayed(self):
-        return self.subsession.round_number % Constants.num_rounds_per_session == 0
+        if self.subsession.round_number > self.session.vars["num_rounds"]:
+            return False
+        else:
+            return self.subsession.round_number % self.session.config["rounds_per_session"] == 0
 
     def vars_for_template(self):
         return self.player.vars_for_template()
@@ -80,7 +84,10 @@ class Calculated(Page):
     """Students shown their payoffs"""
 
     def is_displayed(self):
-        return self.subsession.round_number % Constants.num_rounds_per_session == 0
+        if self.subsession.round_number > self.session.vars["num_rounds"]:
+            return False
+        else:
+            return self.subsession.round_number % self.session.config["rounds_per_session"] == 0
 
     def vars_for_template(self):
         net_units = self.player.participant.vars["endowment"] - self.player.participant.vars["accepted_bids"]
@@ -100,7 +107,10 @@ class FinalResults(Page):
     """Final payoff"""
 
     def is_displayed(self):
-        return self.subsession.round_number % Constants.num_rounds_per_session == 0
+        if self.subsession.round_number > self.session.vars["num_rounds"]:
+            return False
+        else:
+            return self.subsession.round_number % self.session.config["rounds_per_session"] == 0
 
     def vars_for_template(self):
         return {"other_bids": self.session.vars["other_bids"],
@@ -109,7 +119,7 @@ class FinalResults(Page):
                 "num_accepted_bids": len(self.session.vars["accepted_bids"]),
                 "price": self.session.vars["price"],
                 "num_stopped_players": self.session.vars["players_stopped"],
-                "session_num": int(self.subsession.round_number / Constants.num_rounds_per_session),
+                "session_num": int(self.subsession.round_number / self.session.config["rounds_per_session"]),
                 "payoff": self.player.participant.vars["payoff"]}
 
 
@@ -117,10 +127,10 @@ class NewSession(Page):
     """Warning page that a new session will start"""
 
     def is_displayed(self):
-        if self.subsession.round_number == Constants.num_rounds:
+        if self.subsession.round_number == self.session.vars["num_rounds"]:
             return False  # to make sure this page is not displayed after the final session
         else:
-            return self.subsession.round_number % Constants.num_rounds_per_session == 0
+            return self.subsession.round_number % self.session.config["rounds_per_session"] == 0
 
     def before_next_page(self):
         self.group.reset_session()
