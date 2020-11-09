@@ -122,12 +122,16 @@ class FinalResults(Page):
                 "session_num": int(self.subsession.round_number / self.session.config["rounds_per_session"]),
                 "payoff": self.player.participant.vars["payoff"]}
 
+    def before_next_page(self):
+        self.player.store_payoffs()
+        self.group.store_bids()
+
 
 class NewSession(Page):
     """Warning page that a new session will start"""
 
     def is_displayed(self):
-        if self.subsession.round_number == self.session.vars["num_rounds"]:
+        if self.subsession.round_number >= self.session.vars["num_rounds"]:
             return False  # to make sure this page is not displayed after the final session
         else:
             return self.subsession.round_number % self.session.config["rounds_per_session"] == 0
@@ -139,6 +143,21 @@ class NewSession(Page):
         return dict(payoff=self.player.participant.vars["payoff"])
 
 
+class SessionTotals(Page):
+    """"Page to show final payoffs to students (at the end of all sessions)."""
+
+    def is_displayed(self):
+        if self.subsession.round_number == self.session.vars["num_rounds"]:
+            return True
+        else:
+            return False
+
+    def vars_for_template(self):
+        return dict(sessions=self.session.config["num_sessions"],
+                    rounds=self.session.config["rounds_per_session"],
+                    payoff=self.player.participant.vars["payoff"])
+
+
 page_sequence = [
     Introduction,
     Bid,
@@ -147,5 +166,6 @@ page_sequence = [
     Calculate,
     Calculated,
     FinalResults,
-    NewSession
+    NewSession,
+    SessionTotals
 ]

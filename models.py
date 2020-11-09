@@ -3,7 +3,6 @@ from otree.api import (
     Currency as c, currency_range
 )
 from operator import itemgetter
-from django.db import models as djmodels
 import random
 
 doc = """
@@ -19,26 +18,6 @@ class Constants(BaseConstants):
 
 
 class Subsession(BaseSubsession):
-
-    def vars_for_admin_report(self):
-        if self.round_number % self.session.config["rounds_per_session"] == 0:
-            round_in_session = 3  # else it would return 0
-        else:
-            round_in_session = self.round_number % self.session.config["rounds_per_session"]
-        if round_in_session == self.session.config["rounds_per_session"]:
-            session_nr = int(self.round_number / self.session.config["rounds_per_session"])
-        else:
-            session_nr = int(self.round_number / self.session.config["rounds_per_session"]) + 1
-        official_round = self.round_number
-        vars_admin_list = [[p.id_in_group,
-                            p.participant.vars["payoff"],
-                            round_in_session,
-                            session_nr,
-                            official_round,
-                            p.participant.vars["land"],
-                            p.participant.vars["endowment"]]
-                           for p in self.get_players()]
-        return dict(vars_admin_list=vars_admin_list)
 
     def creating_session(self):
         group_matrix = []
@@ -70,7 +49,11 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
-    total_nr_bids = models.IntegerField()
+    endowments = models.IntegerField()
+    all_bids = models.StringField(null=True)
+    accepted_bids = models.StringField(null=True)
+    auction_price = models.CurrencyField()
+    stopped = models.IntegerField()
 
     def order_bids(self):
         for p in self.get_players():
@@ -100,8 +83,7 @@ class Group(BaseGroup):
         endowments = self.session.config["endowments"]
         land = self.session.config["land"]
         for p in self.get_players():
-            if p == 1:  # to make sure only to reset once per group
-                print("now resetting session")
+            if p.id_in_group == 1:  # to make sure only to reset once per group
                 self.session.vars["players_stopped"] = 0
                 self.session.vars["bids"] = []
                 self.session.vars["accepted_bids"] = []
@@ -109,7 +91,6 @@ class Group(BaseGroup):
                 self.session.vars["accepted_bidders"] = []
                 self.session.vars["price"] = c(0)
                 self.session.vars["total_num_endowments"] = 0
-
             else:
                 pass
             p.participant.vars["endowment"] = random.choice(endowments)
@@ -117,12 +98,20 @@ class Group(BaseGroup):
             p.participant.vars["land"] = random.choice(land)
             self.session.vars["total_num_endowments"] += p.participant.vars["endowment"]
 
+    def store_bids(self):
+        self.accepted_bids = str(self.session.vars["bids"])  # idea to improve: unpack Currency() here
+        self.all_bids = str(self.session.vars["accepted_bids"])
+        self.auction_price = self.session.vars["price"]
+        self.stopped = self.session.vars["players_stopped"]
+        self.endowments = self.session.vars["total_num_endowments"]
+
 
 class Player(BasePlayer):
     endowment = models.IntegerField()
     bid = models.CurrencyField(min=0, max=20, initial=0, blank=True)  # min will be set in Bid template to current price
     stop = models.BooleanField()
     accepted_bids = models.IntegerField()
+    total_payoff = models.CurrencyField()
 
     def vars_for_template(self):
         if self.subsession.round_number % self.session.config["rounds_per_session"] == 0:
@@ -148,3 +137,6 @@ class Player(BasePlayer):
         profit_land = profit_irrigated + profit_dry
         profit = profit_land + cash_change
         self.participant.vars["payoff"] += profit
+
+    def store_payoffs(self):
+        self.total_payoff = self.participant.vars["payoff"]
