@@ -4,6 +4,7 @@ from ._builtin import Page, WaitPage
 
 class Introduction(Page):
     """Description of the game: How to play and returns expected"""
+    timeout_seconds = 90
 
     def is_displayed(self):
         return self.subsession.round_number == 1
@@ -54,6 +55,8 @@ class AfterBidWP(WaitPage):
 class Results(Page):
     """Players payoff: How much each has earned"""
 
+    timeout_seconds = 15
+
     def is_displayed(self):
         return self.session.vars["players_stopped"] < self.session.config['players_per_group'] and \
                self.subsession.round_number < self.session.vars["num_rounds"]
@@ -66,6 +69,8 @@ class Results(Page):
 
 class Calculate(Page):
     """Students are asked to calculate payoff"""
+
+    timeout_seconds = 90
 
     def is_displayed(self):
         if self.subsession.round_number > self.session.vars["num_rounds"]:
@@ -82,6 +87,8 @@ class Calculate(Page):
 
 class Calculated(Page):
     """Students shown their payoffs"""
+
+    timeout_seconds = 60
 
     def is_displayed(self):
         if self.subsession.round_number > self.session.vars["num_rounds"]:
@@ -104,7 +111,9 @@ class Calculated(Page):
 
 
 class FinalResults(Page):
-    """Final payoff"""
+    """Overview of bids in this session"""
+
+    timeout_seconds = 60
 
     def is_displayed(self):
         if self.subsession.round_number > self.session.vars["num_rounds"]:
